@@ -1,0 +1,831 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<title>API: calendar   CalendarNavigator.js  (YUI Library)</title>
+
+	<link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+	<link rel="stylesheet" type="text/css" href="assets/api.css" />
+
+    <script type="text/javascript" src="assets/api-js"></script>
+    <script type="text/javascript" src="assets/ac-js"></script>
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://developer.yahoo.com/yui/" title="Yahoo! UI Library">Yahoo! UI Library</a></h1>
+        <h3>Calendar&nbsp; <span class="subtitle">2.9.0</span></h3>
+        <a href="./index.html" title="Yahoo! UI Library">Yahoo! UI Library</a> 
+            &gt; <a href="./module_calendar.html" title="calendar">calendar</a>
+                
+                 &gt; CalendarNavigator.js (source view) 
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <div id="srcout">
+                        <style>
+                            #doc3 .classopts { display:none; }
+                        </style>
+                        <div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * The CalendarNavigator is used along with a Calendar/CalendarGroup to </span>
+<span class="cm"> * provide a Month/Year popup navigation control, allowing the user to navigate </span>
+<span class="cm"> * to a specific month/year in the Calendar/CalendarGroup without having to </span>
+<span class="cm"> * scroll through months sequentially</span>
+<span class="cm"> *</span>
+<span class="cm"> * @namespace YAHOO.widget</span>
+<span class="cm"> * @class CalendarNavigator</span>
+<span class="cm"> * @constructor</span>
+<span class="cm"> * @param {Calendar|CalendarGroup} cal The instance of the Calendar or CalendarGroup to which this CalendarNavigator should be attached.</span>
+<span class="cm"> */</span>
+<span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">cal</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nx">cal</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// Setup static properties (inside anon fn, so that we can use shortcuts)</span>
+    <span class="kd">var</span> <span class="nx">CN</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">;</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * YAHOO.widget.CalendarNavigator.CLASSES contains constants</span>
+<span class="cm">     * for the class values applied to the CalendarNaviatgator&#39;s </span>
+<span class="cm">     * DOM elements</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.CLASSES</span>
+<span class="cm">     * @type Object</span>
+<span class="cm">     * @static</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">CLASSES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the Calendar Navigator&#39;s bounding box</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.NAV</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">NAV</span> <span class="o">:</span><span class="s2">&quot;yui-cal-nav&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the Calendar/CalendarGroup&#39;s bounding box to indicate</span>
+<span class="cm">         * the Navigator is currently visible</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.NAV_VISIBLE</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">NAV_VISIBLE</span><span class="o">:</span> <span class="s2">&quot;yui-cal-nav-visible&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the Navigator mask&#39;s bounding box</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.MASK</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">MASK</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-mask&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the year label/control bounding box</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.YEAR</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">YEAR</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-y&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the month label/control bounding box</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.MONTH</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">MONTH</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-m&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the submit/cancel button&#39;s bounding box</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.BUTTONS</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">BUTTONS</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-b&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to buttons wrapping element</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.BUTTON</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">BUTTON</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-btn&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the validation error area&#39;s bounding box</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.ERROR</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">ERROR</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-e&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the year input control</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.YEAR_CTRL</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">YEAR_CTRL</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-yc&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to the month input control</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.MONTH_CTRL</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">MONTH_CTRL</span> <span class="o">:</span> <span class="s2">&quot;yui-cal-nav-mc&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to controls with invalid data (e.g. a year input field with invalid an year)</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.INVALID</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">INVALID</span> <span class="o">:</span> <span class="s2">&quot;yui-invalid&quot;</span><span class="p">,</span>
+        <span class="cm">/**</span>
+<span class="cm">         * Class applied to default controls</span>
+<span class="cm">         * @property YAHOO.widget.CalendarNavigator.CLASSES.DEFAULT</span>
+<span class="cm">         * @type String</span>
+<span class="cm">         * @static</span>
+<span class="cm">         */</span>
+        <span class="nx">DEFAULT</span> <span class="o">:</span> <span class="s2">&quot;yui-default&quot;</span>
+    <span class="p">};</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Object literal containing the default configuration values for the CalendarNavigator</span>
+<span class="cm">     * The configuration object is expected to follow the format below, with the properties being</span>
+<span class="cm">     * case sensitive.</span>
+<span class="cm">     * &lt;dl&gt;</span>
+<span class="cm">     * &lt;dt&gt;strings&lt;/dt&gt;</span>
+<span class="cm">     * &lt;dd&gt;&lt;em&gt;Object&lt;/em&gt; :  An object with the properties shown below, defining the string labels to use in the Navigator&#39;s UI</span>
+<span class="cm">     *     &lt;dl&gt;</span>
+<span class="cm">     *         &lt;dt&gt;month&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;HTML&lt;/em&gt; : The markup to use for the month label. Defaults to &quot;Month&quot;.&lt;/dd&gt;</span>
+<span class="cm">     *         &lt;dt&gt;year&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;HTML&lt;/em&gt; : The markup to use for the year label. Defaults to &quot;Year&quot;.&lt;/dd&gt;</span>
+<span class="cm">     *         &lt;dt&gt;submit&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;HTML&lt;/em&gt; : The markup to use for the submit button label. Defaults to &quot;Okay&quot;.&lt;/dd&gt;</span>
+<span class="cm">     *         &lt;dt&gt;cancel&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;HTML&lt;/em&gt; : The markup to use for the cancel button label. Defaults to &quot;Cancel&quot;.&lt;/dd&gt;</span>
+<span class="cm">     *         &lt;dt&gt;invalidYear&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;HTML&lt;/em&gt; : The markup to use for invalid year values. Defaults to &quot;Year needs to be a number&quot;.&lt;/dd&gt;</span>
+<span class="cm">     *     &lt;/dl&gt;</span>
+<span class="cm">     * &lt;/dd&gt;</span>
+<span class="cm">     * &lt;dt&gt;monthFormat&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;String&lt;/em&gt; : The month format to use. Either YAHOO.widget.Calendar.LONG, or YAHOO.widget.Calendar.SHORT. Defaults to YAHOO.widget.Calendar.LONG&lt;/dd&gt;</span>
+<span class="cm">     * &lt;dt&gt;initialFocus&lt;/dt&gt;&lt;dd&gt;&lt;em&gt;String&lt;/em&gt; : Either &quot;year&quot; or &quot;month&quot; specifying which input control should get initial focus. Defaults to &quot;year&quot;&lt;/dd&gt;</span>
+<span class="cm">     * &lt;/dl&gt;</span>
+<span class="cm">     * @property DEFAULT_CONFIG</span>
+<span class="cm">     * @type Object</span>
+<span class="cm">     * @static</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nx">strings</span> <span class="o">:</span> <span class="p">{</span>
+            <span class="nx">month</span><span class="o">:</span> <span class="s2">&quot;Month&quot;</span><span class="p">,</span>
+            <span class="nx">year</span><span class="o">:</span> <span class="s2">&quot;Year&quot;</span><span class="p">,</span>
+            <span class="nx">submit</span><span class="o">:</span> <span class="s2">&quot;Okay&quot;</span><span class="p">,</span>
+            <span class="nx">cancel</span><span class="o">:</span> <span class="s2">&quot;Cancel&quot;</span><span class="p">,</span>
+            <span class="nx">invalidYear</span> <span class="o">:</span> <span class="s2">&quot;Year needs to be a number&quot;</span>
+        <span class="p">},</span>
+        <span class="nx">monthFormat</span><span class="o">:</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">Calendar</span><span class="p">.</span><span class="nx">LONG</span><span class="p">,</span>
+        <span class="nx">initialFocus</span><span class="o">:</span> <span class="s2">&quot;year&quot;</span>
+    <span class="p">};</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Object literal containing the default configuration values for the CalendarNavigator</span>
+<span class="cm">     * @property _DEFAULT_CFG</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @deprecated Made public. See the public DEFAULT_CONFIG property</span>
+<span class="cm">     * @type Object</span>
+<span class="cm">     * @static</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">_DEFAULT_CFG</span> <span class="o">=</span> <span class="nx">CN</span><span class="p">.</span><span class="nx">DEFAULT_CONFIG</span><span class="p">;</span>
+
+
+    <span class="cm">/**</span>
+<span class="cm">     * The suffix added to the Calendar/CalendarGroup&#39;s ID, to generate</span>
+<span class="cm">     * a unique ID for the Navigator and it&#39;s bounding box.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.ID_SUFFIX</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type String</span>
+<span class="cm">     * @final</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">ID_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;_nav&quot;</span><span class="p">;</span>
+    <span class="cm">/**</span>
+<span class="cm">     * The suffix added to the Navigator&#39;s ID, to generate</span>
+<span class="cm">     * a unique ID for the month control.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.MONTH_SUFFIX</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type String </span>
+<span class="cm">     * @final</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">MONTH_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;_month&quot;</span><span class="p">;</span>
+    <span class="cm">/**</span>
+<span class="cm">     * The suffix added to the Navigator&#39;s ID, to generate</span>
+<span class="cm">     * a unique ID for the year control.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.YEAR_SUFFIX</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type String</span>
+<span class="cm">     * @final</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">YEAR_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;_year&quot;</span><span class="p">;</span>
+    <span class="cm">/**</span>
+<span class="cm">     * The suffix added to the Navigator&#39;s ID, to generate</span>
+<span class="cm">     * a unique ID for the error bounding box.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.ERROR_SUFFIX</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type String</span>
+<span class="cm">     * @final</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">ERROR_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;_error&quot;</span><span class="p">;</span>
+    <span class="cm">/**</span>
+<span class="cm">     * The suffix added to the Navigator&#39;s ID, to generate</span>
+<span class="cm">     * a unique ID for the &quot;Cancel&quot; button.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.CANCEL_SUFFIX</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type String</span>
+<span class="cm">     * @final</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">CANCEL_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;_cancel&quot;</span><span class="p">;</span>
+    <span class="cm">/**</span>
+<span class="cm">     * The suffix added to the Navigator&#39;s ID, to generate</span>
+<span class="cm">     * a unique ID for the &quot;Submit&quot; button.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.SUBMIT_SUFFIX</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type String</span>
+<span class="cm">     * @final</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">SUBMIT_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;_submit&quot;</span><span class="p">;</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The number of digits to which the year input control is to be limited.</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.YR_MAX_DIGITS</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">YR_MAX_DIGITS</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The amount by which to increment the current year value,</span>
+<span class="cm">     * when the arrow up/down key is pressed on the year control</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.YR_MINOR_INC</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">YR_MINOR_INC</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The amount by which to increment the current year value,</span>
+<span class="cm">     * when the page up/down key is pressed on the year control</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.YR_MAJOR_INC</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">YR_MAJOR_INC</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Artificial delay (in ms) between the time the Navigator is hidden</span>
+<span class="cm">     * and the Calendar/CalendarGroup state is updated. Allows the user</span>
+<span class="cm">     * the see the Calendar/CalendarGroup page changing. If set to 0</span>
+<span class="cm">     * the Calendar/CalendarGroup page will be updated instantly</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.UPDATE_DELAY</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">UPDATE_DELAY</span> <span class="o">=</span> <span class="mi">50</span><span class="p">;</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Regular expression used to validate the year input</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.YR_PATTERN</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type RegExp</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">YR_PATTERN</span> <span class="o">=</span> <span class="sr">/^\d+$/</span><span class="p">;</span>
+    <span class="cm">/**</span>
+<span class="cm">     * Regular expression used to trim strings</span>
+<span class="cm">     * @property YAHOO.widget.CalendarNavigator.TRIM</span>
+<span class="cm">     * @static</span>
+<span class="cm">     * @type RegExp</span>
+<span class="cm">     */</span>
+    <span class="nx">CN</span><span class="p">.</span><span class="nx">TRIM</span> <span class="o">=</span> <span class="sr">/^\s*(.*?)\s*$/</span><span class="p">;</span>
+<span class="p">})();</span>
+
+<span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The unique ID for this CalendarNavigator instance</span>
+<span class="cm">     * @property id</span>
+<span class="cm">     * @type String</span>
+<span class="cm">     */</span>
+    <span class="nx">id</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The Calendar/CalendarGroup instance to which the navigator belongs</span>
+<span class="cm">     * @property cal</span>
+<span class="cm">     * @type {Calendar|CalendarGroup}</span>
+<span class="cm">     */</span>
+    <span class="nx">cal</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to render the navigator&#39;s bounding box</span>
+<span class="cm">     * @property navEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">navEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to render the navigator&#39;s mask</span>
+<span class="cm">     * @property maskEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">maskEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to input the year</span>
+<span class="cm">     * @property yearEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">yearEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to input the month</span>
+<span class="cm">     * @property monthEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">monthEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to display validation errors</span>
+<span class="cm">     * @property errorEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">errorEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to update the Calendar/Calendar group</span>
+<span class="cm">     * with the month/year values</span>
+<span class="cm">     * @property submitEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">submitEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to hide the navigator without updating the </span>
+<span class="cm">     * Calendar/Calendar group</span>
+<span class="cm">     * @property cancelEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">cancelEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/** </span>
+<span class="cm">     * Reference to the first focusable control in the navigator (by default monthEl)</span>
+<span class="cm">     * @property firstCtrl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">firstCtrl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/** </span>
+<span class="cm">     * Reference to the last focusable control in the navigator (by default cancelEl)</span>
+<span class="cm">     * @property lastCtrl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">lastCtrl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The document containing the Calendar/Calendar group instance</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _doc</span>
+<span class="cm">     * @type HTMLDocument</span>
+<span class="cm">     */</span>
+    <span class="nx">_doc</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Internal state property for the current year displayed in the navigator</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _year</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">_year</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">     * Internal state property for the current month index displayed in the navigator</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _month</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">_month</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Private internal state property which indicates whether or not the </span>
+<span class="cm">     * Navigator has been rendered.</span>
+<span class="cm">     * @private</span>
+<span class="cm">     * @property __rendered</span>
+<span class="cm">     * @type Boolean</span>
+<span class="cm">     */</span>
+    <span class="nx">__rendered</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Init lifecycle method called as part of construction</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method init</span>
+<span class="cm">     * @param {Calendar} cal The instance of the Calendar or CalendarGroup to which this CalendarNavigator should be attached</span>
+<span class="cm">     */</span>
+    <span class="nx">init</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">cal</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">calBox</span> <span class="o">=</span> <span class="nx">cal</span><span class="p">.</span><span class="nx">oDomContainer</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">cal</span> <span class="o">=</span> <span class="nx">cal</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="nx">calBox</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">ID_SUFFIX</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_doc</span> <span class="o">=</span> <span class="nx">calBox</span><span class="p">.</span><span class="nx">ownerDocument</span><span class="p">;</span>
+
+        <span class="cm">/**</span>
+<span class="cm">         * Private flag, to identify IE Quirks</span>
+<span class="cm">         * @private</span>
+<span class="cm">         * @property __isIEQuirks</span>
+<span class="cm">         */</span>
+        <span class="kd">var</span> <span class="nx">ie</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">ua</span><span class="p">.</span><span class="nx">ie</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">__isIEQuirks</span> <span class="o">=</span> <span class="p">(</span><span class="nx">ie</span> <span class="o">&amp;&amp;</span> <span class="p">((</span><span class="nx">ie</span> <span class="o">&lt;=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_doc</span><span class="p">.</span><span class="nx">compatMode</span> <span class="o">==</span> <span class="s2">&quot;BackCompat&quot;</span><span class="p">)));</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Displays the navigator and mask, updating the input controls to reflect the </span>
+<span class="cm">     * currently set month and year. The show method will invoke the render method</span>
+<span class="cm">     * if the navigator has not been renderered already, allowing for lazy rendering</span>
+<span class="cm">     * of the control.</span>
+<span class="cm">     * </span>
+<span class="cm">     * The show method will fire the Calendar/CalendarGroup&#39;s beforeShowNav and showNav events</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method show</span>
+<span class="cm">     */</span>
+    <span class="nx">show</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">CLASSES</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">CLASSES</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">beforeShowNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">__rendered</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">clearErrors</span><span class="p">();</span>
+
+            <span class="k">this</span><span class="p">.</span><span class="nx">_updateMonthUI</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">_updateYearUI</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">_show</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">navEl</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+
+            <span class="k">this</span><span class="p">.</span><span class="nx">setInitialFocus</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">showMask</span><span class="p">();</span>
+
+            <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Dom</span><span class="p">.</span><span class="nx">addClass</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">oDomContainer</span><span class="p">,</span> <span class="nx">CLASSES</span><span class="p">.</span><span class="nx">NAV_VISIBLE</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">showNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Hides the navigator and mask</span>
+<span class="cm">     * </span>
+<span class="cm">     * The show method will fire the Calendar/CalendarGroup&#39;s beforeHideNav event and hideNav events</span>
+<span class="cm">     * @method hide</span>
+<span class="cm">     */</span>
+    <span class="nx">hide</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">CLASSES</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">CLASSES</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">beforeHideNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">_show</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">navEl</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">hideMask</span><span class="p">();</span>
+            <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Dom</span><span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">oDomContainer</span><span class="p">,</span> <span class="nx">CLASSES</span><span class="p">.</span><span class="nx">NAV_VISIBLE</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">hideNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    
+
+    <span class="cm">/**</span>
+<span class="cm">     * Displays the navigator&#39;s mask element</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method showMask</span>
+<span class="cm">     */</span>
+    <span class="nx">showMask</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_show</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">maskEl</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">__isIEQuirks</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">_syncMask</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Hides the navigator&#39;s mask element</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method hideMask</span>
+<span class="cm">     */</span>
+    <span class="nx">hideMask</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_show</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">maskEl</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Returns the current month set on the navigator</span>
+<span class="cm">     * </span>
+<span class="cm">     * Note: This may not be the month set in the UI, if </span>
+<span class="cm">     * the UI contains an invalid value.</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method getMonth</span>
+<span class="cm">     * @return {Number} The Navigator&#39;s current month index</span>
+<span class="cm">     */</span>
+    <span class="nx">getMonth</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">_month</span><span class="p">;</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Returns the current year set on the navigator</span>
+<span class="cm">     * </span>
+<span class="cm">     * Note: This may not be the year set in the UI, if </span>
+<span class="cm">     * the UI contains an invalid value.</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method getYear</span>
+<span class="cm">     * @return {Number} The Navigator&#39;s current year value</span>
+<span class="cm">     */</span>
+    <span class="nx">getYear</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">_year</span><span class="p">;</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Sets the current month on the Navigator, and updates the UI</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method setMonth</span>
+<span class="cm">     * @param {Number} nMonth The month index, from 0 (Jan) through 11 (Dec).</span>
+<span class="cm">     */</span>
+    <span class="nx">setMonth</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">nMonth</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">nMonth</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">nMonth</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">_month</span> <span class="o">=</span> <span class="nx">nMonth</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_updateMonthUI</span><span class="p">();</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Sets the current year on the Navigator, and updates the UI. If the </span>
+<span class="cm">     * provided year is invalid, it will not be set.</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method setYear</span>
+<span class="cm">     * @param {Number} nYear The full year value to set the Navigator to.</span>
+<span class="cm">     */</span>
+    <span class="nx">setYear</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">nYear</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">yrPattern</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">YR_PATTERN</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">YAHOO</span><span class="p">.</span><span class="nx">lang</span><span class="p">.</span><span class="nx">isNumber</span><span class="p">(</span><span class="nx">nYear</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">yrPattern</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">nYear</span><span class="o">+</span><span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">_year</span> <span class="o">=</span> <span class="nx">nYear</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_updateYearUI</span><span class="p">();</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Renders the HTML for the navigator, adding it to the </span>
+<span class="cm">     * document and attaches event listeners if it has not </span>
+<span class="cm">     * already been rendered.</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method render</span>
+<span class="cm">     */</span>
+    <span class="nx">render</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">beforeRenderNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">__rendered</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">createNav</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">createMask</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">applyListeners</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">__rendered</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">renderNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">();</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Creates the navigator&#39;s containing HTMLElement, it&#39;s contents, and appends </span>
+<span class="cm">     * the containg element to the Calendar/CalendarGroup&#39;s container.</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method createNav</span>
+<span class="cm">     */</span>
+    <span class="nx">createNav</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">NAV</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">doc</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_doc</span><span class="p">;</span>
+
+        <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
+        <span class="nx">d</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="nx">NAV</span><span class="p">.</span><span class="nx">CLASSES</span><span class="p">.</span><span class="nx">NAV</span><span class="p">;</span>
+
+        <span class="kd">var</span> <span class="nx">htmlBuf</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">renderNavContents</span><span class="p">([]);</span>
+
+        <span class="nx">d</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">htmlBuf</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">oDomContainer</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">d</span><span class="p">);</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">navEl</span> <span class="o">=</span> <span class="nx">d</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">yearEl</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="nx">NAV</span><span class="p">.</span><span class="nx">YEAR_SUFFIX</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">monthEl</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="nx">NAV</span><span class="p">.</span><span class="nx">MONTH_SUFFIX</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">errorEl</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="nx">NAV</span><span class="p">.</span><span class="nx">ERROR_SUFFIX</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">submitEl</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><ss="cm">     * Reference to the HTMLElement used to display validation errors</span>
+<span class="cm">     * @property errorEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">errorEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to update the Calendar/Calendar group</span>
+<span class="cm">     * with the month/year values</span>
+<span class="cm">     * @property submitEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">submitEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to hide the navigator without updating the </span>
+<span class="cm">     * Calendar/Calendar group</span>
+<span class="cm">     * @property cancelEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">cancelEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/** </span>
+<span class="cm">     * Reference to the first focusable control in the navigator (by default monthEl)</span>
+<span class="cm">     * @property firstCtrl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">firstCtrl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/** </span>
+<span class="cm">     * Reference to the last focusable control in the navigator (by default cancelEl)</span>
+<span class="cm">     * @property lastCtrl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">lastCtrl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The document containing the Calendar/Calendar group instance</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _doc</span>
+<span class="cm">     * @type HTMLDocument</span>
+<span class="cm">     */</span>
+    <span class="nx">_doc</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Internal state property for the current year displayed in the navigator</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _year</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">_year</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">     * Internal state property for the current month index displayed in the navigator</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _month</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">_month</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Private internal state property which indicates whether or not the </span>
+<span class="cm">     * Navigator has been rendered.</span>
+<span class="cm">     * @private</span>
+<span class="cm">     * @property __rendered</span>
+<span class="cm">     * @type Boolean</span>
+<span class="cm">     */</span>
+    <span class="nx">__rendered</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Init lifecycle method called as part of construction</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method init</span>
+<span class="cm">     * @param {Calendar} cal The instance of the Calendar or CalendarGroup to which this CalendarNavigator should be attached</span>
+<span class="cm">     */</span>
+    <span class="nx">init</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">cal</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">calBox</span> <span class="o">=</span> <span class="nx">cal</span><span class="p">.</span><span class="nx">oDomContainer</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">cal</span> <span class="o">=</span> <span class="nx">cal</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="nx">calBox</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">ID_SUFFIX</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_doc</span> <span class="o">=</span> <span class="nx">calBox</span><span class="p">.</span><span class="nx">ownerDocument</span><span class="p">;</span>
+
+        <span class="cm">/**</span>
+<span class="cm">         * Private flag, to identify IE Quirks</span>
+<span class="cm">         * @private</span>
+<span class="cm">         * @property __isIEQuirks</span>
+<span class="cm">         */</span>
+        <span class="kd">var</span> <span class="nx">ie</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">ua</span><span class="p">.</span><span class="nx">ie</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">__isIEQuirks</span> <span class="o">=</span> <span class="p">(</span><span class="nx">ie</span> <span class="o">&amp;&amp;</span> <span class="p">((</span><span class="nx">ie</span> <span class="o">&lt;=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_doc</span><span class="p">.</span><span class="nx">compatMode</span> <span class="o">==</span> <span class="s2">&quot;BackCompat&quot;</span><span class="p">)));</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Displays the navigator and mask, updating the input controls to reflect the </span>
+<span class="cm">     * currently set month and year. The show method will invoke the render method</span>
+<span class="cm">     * if the navigator has not been renderered already, allowing for lazy rendering</span>
+<span class="cm">     * of the control.</span>
+<span class="cm">     * </span>
+<span class="cm">     * The show method will fire the Calendar/CalendarGroup&#39;s beforeShowNav and showNav events</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method show</span>
+<span class="cm">     */</span>
+    <span class="nx">show</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">CLASSES</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">CLASSES</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">beforeShowNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">__rendered</span><span class="p">)</span> <span class="p">{</span>
+          s="cm">     * Reference to the HTMLElement used to display validation errors</span>
+<span class="cm">     * @property errorEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">errorEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to update the Calendar/Calendar group</span>
+<span class="cm">     * with the month/year values</span>
+<span class="cm">     * @property submitEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">submitEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">     * Reference to the HTMLElement used to hide the navigator without updating the </span>
+<span class="cm">     * Calendar/Calendar group</span>
+<span class="cm">     * @property cancelEl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">cancelEl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/** </span>
+<span class="cm">     * Reference to the first focusable control in the navigator (by default monthEl)</span>
+<span class="cm">     * @property firstCtrl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">firstCtrl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/** </span>
+<span class="cm">     * Reference to the last focusable control in the navigator (by default cancelEl)</span>
+<span class="cm">     * @property lastCtrl</span>
+<span class="cm">     * @type HTMLElement</span>
+<span class="cm">     */</span>
+    <span class="nx">lastCtrl</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * The document containing the Calendar/Calendar group instance</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _doc</span>
+<span class="cm">     * @type HTMLDocument</span>
+<span class="cm">     */</span>
+    <span class="nx">_doc</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Internal state property for the current year displayed in the navigator</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _year</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">_year</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">     * Internal state property for the current month index displayed in the navigator</span>
+<span class="cm">     * @protected</span>
+<span class="cm">     * @property _month</span>
+<span class="cm">     * @type Number</span>
+<span class="cm">     */</span>
+    <span class="nx">_month</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Private internal state property which indicates whether or not the </span>
+<span class="cm">     * Navigator has been rendered.</span>
+<span class="cm">     * @private</span>
+<span class="cm">     * @property __rendered</span>
+<span class="cm">     * @type Boolean</span>
+<span class="cm">     */</span>
+    <span class="nx">__rendered</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Init lifecycle method called as part of construction</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method init</span>
+<span class="cm">     * @param {Calendar} cal The instance of the Calendar or CalendarGroup to which this CalendarNavigator should be attached</span>
+<span class="cm">     */</span>
+    <span class="nx">init</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">cal</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">calBox</span> <span class="o">=</span> <span class="nx">cal</span><span class="p">.</span><span class="nx">oDomContainer</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">cal</span> <span class="o">=</span> <span class="nx">cal</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="nx">calBox</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">ID_SUFFIX</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_doc</span> <span class="o">=</span> <span class="nx">calBox</span><span class="p">.</span><span class="nx">ownerDocument</span><span class="p">;</span>
+
+        <span class="cm">/**</span>
+<span class="cm">         * Private flag, to identify IE Quirks</span>
+<span class="cm">         * @private</span>
+<span class="cm">         * @property __isIEQuirks</span>
+<span class="cm">         */</span>
+        <span class="kd">var</span> <span class="nx">ie</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">ua</span><span class="p">.</span><span class="nx">ie</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">__isIEQuirks</span> <span class="o">=</span> <span class="p">(</span><span class="nx">ie</span> <span class="o">&amp;&amp;</span> <span class="p">((</span><span class="nx">ie</span> <span class="o">&lt;=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_doc</span><span class="p">.</span><span class="nx">compatMode</span> <span class="o">==</span> <span class="s2">&quot;BackCompat&quot;</span><span class="p">)));</span>
+    <span class="p">},</span>
+
+    <span class="cm">/**</span>
+<span class="cm">     * Displays the navigator and mask, updating the input controls to reflect the </span>
+<span class="cm">     * currently set month and year. The show method will invoke the render method</span>
+<span class="cm">     * if the navigator has not been renderered already, allowing for lazy rendering</span>
+<span class="cm">     * of the control.</span>
+<span class="cm">     * </span>
+<span class="cm">     * The show method will fire the Calendar/CalendarGroup&#39;s beforeShowNav and showNav events</span>
+<span class="cm">     * </span>
+<span class="cm">     * @method show</span>
+<span class="cm">     */</span>
+    <span class="nx">show</span> <span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">CLASSES</span> <span class="o">=</span> <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">widget</span><span class="p">.</span><span class="nx">CalendarNavigator</span><span class="p">.</span><span class="nx">CLASSES</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cal</span><span class="p">.</span><span class="nx">beforeShowNavEvent</span><span class="p">.</span><span class="nx">fire</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">__rendered</span><span class="p">)</span> <span class="p">{</span>
+          

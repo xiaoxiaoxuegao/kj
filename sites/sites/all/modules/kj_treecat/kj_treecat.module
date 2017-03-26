@@ -1,0 +1,111 @@
+<?php
+
+function kj_treecat_menu(){
+  return array(
+    'kj_tree' => array(
+      'title' => '科技创新政策体系',
+      'access callback' => TRUE,
+      'page callback' => 'kj_render_treecat_page',
+    ),
+  );
+}
+
+function kj_render_treecat_page() {
+
+  // 科技创新政策体系体系一
+  $vocabulary_first = taxonomy_vocabulary_machine_name_load('_fen_lei');
+  $first_tree = taxonomy_get_tree($vocabulary_first->vid, 0, 1);
+
+  return theme('kj_catpage', array('tree_list' => $first_tree));
+}
+
+function kj_treecat_theme() {
+  $hooks = array(
+    'tree_items' => array(
+      'template' => 'kj_tree_items',
+      'variables' => array('tree' => array(), 'parent_item' => null)
+    ),
+    'kj_catpage' => array(
+      'template' => 'kj_catpage',
+      'variables' => array('tree_list' => array() ),
+    ),
+  );
+
+  return $hooks;
+}
+
+function _get_terms_in_level(&$terms, $level, $group_num) {
+  $same_level_terms = array();
+  foreach($terms as $pos => $term) {
+    $name = $term->name;
+
+    if ($group_num !== FALSE && substr($name, 0, $level) != $group_num) continue;
+
+    preg_match("/[\d]+/", $name, $matches);
+    if ($matches) {
+      $prefix = $matches[0];
+      $index = $prefix[$level];
+
+      if (isset($same_level_terms[$index])) {
+        $old_item = $same_level_terms[$index];
+        preg_match("/[\d]+/", $old_item->name, $matches);
+        if ($matches) {
+          $old_prefix = $matches[0];
+          if (isset($prefix[$level + 1]) && $old_prefix[$level + 1] > $prefix[$level + 1]) {
+            $same_level_terms[$index] = $term;
+            unset($terms[$pos]);
+          }
+        }
+      } else {
+        $same_level_terms[$index] = $term;
+        unset($terms[$pos]);
+      }
+    } else {
+      $same_level_terms[] = $term;
+      unset($terms[$pos]);
+    }
+  }
+
+  return $same_level_terms;
+}
+
+function make_cat_tree($terms, $level = 0, $group_num = FALSE) {
+
+  $same_level_terms = _get_terms_in_level($terms, $level, $group_num);
+  if (count($same_level_terms) == count($terms)) {
+    $level_terms = array();
+    foreach ($same_level_terms as $term) {
+      $level_terms[] = array(
+        'term' => $term,
+        'children' => array(),
+      );
+    }
+    return $level_terms;
+  }
+
+  $level_terms = array();
+  $level ++;
+  foreach ($same_level_terms as $group_num => $term) {
+    $item = array(
+      'term' => $term,
+      'children' => array(),
+    );
+    $name = $term->name;
+    preg_match("/[\d]+/", $name, $matches);
+    if ($matches) {
+      $prefix = $matches[0];
+      if ($level < strlen($prefix)) {
+        $new_group_num = substr($name, 0, $level);
+        $item['children'] = make_cat_tree($terms, $level, $new_group_num);
+      }
+    }
+
+    $level_terms[] = $item;
+  }
+
+  return $level_terms;
+}
+
+function kj_treecat_preprocess_tree_items(&$variables) {
+  //
+}

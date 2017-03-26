@@ -1,0 +1,396 @@
+<?php
+
+/**
+ * @file
+ * Provides SimpleTests for menu.inc.
+ */
+
+class MenuWebTestCase extends DrupalWebTestCase {
+  function setUp() {
+    $modules = func_get_args();
+    if (isset($modules[0]) && is_array($modules[0])) {
+      $modules = $modules[0];
+    }
+    parent::setUp($modules);
+  }
+
+  /**
+   * Assert that a given path shows certain breadcrumb links.
+   *
+   * @param string $goto
+   *   (optional) A system path to pass to DrupalWebTestCase::drupalGet().
+   * @param array $trail
+   *   An associative array whose keys are expected breadcrumb link paths and
+   *   whose values are expected breadcrumb link texts (not sanitized).
+   * @param string $page_title
+   *   (optional) A page title to additionally assert via
+   *   DrupalWebTestCase::assertTitle(). Without site name suffix.
+   * @param array $tree
+   *   (optional) An associative array whose keys are link paths and whose
+   *   values are link titles (not sanitized) of an expected active trail in a
+   *   menu tree output on the page.
+   * @param $last_active
+   *   (optional) Whether the last link in $tree is expected to be active (TRUE)
+   *   or just to be in the active trail (FALSE).
+   */
+  protected function assertBreadcrumb($goto, array $trail, $page_title = NULL, array $tree = array(), $last_active = TRUE) {
+    if (isset($goto)) {
+      $this->drupalGet($goto);
+    }
+    // Compare paths with actual breadcrumb.
+    $parts = $this->getParts();
+    $pass = TRUE;
+    foreach ($trail as $path => $title) {
+      $url = url($path);
+      $part = array_shift($parts);
+      $pass = ($pass && $part['href'] === $url && $part['text'] === check_plain($title));
+    }
+    // No parts must be left, or an expected "Home" will always pass.
+    $pass = ($pass && empty($parts));
+
+    $this->assertTrue($pass, format_string('Breadcrumb %parts found on @path.', array(
+      '%parts' => implode(' » ', $trail),
+      '@path' => $this->getUrl(),
+    )));
+
+    // Additionally assert page title, if given.
+    if (isset($page_title)) {
+      $this->assertTitle(strtr('@title | Drupal', array('@title' => $page_title)));
+    }
+
+    // Additionally assert active trail in a menu tree output, if given.
+    if ($tree) {
+      end($tree);
+      $active_link_path = key($tree);
+      $active_link_title = array_pop($tree);
+      $xpath = '';
+      if ($tree) {
+        $i = 0;
+        foreach ($tree as $link_path => $link_title) {
+          $part_xpath = (!$i ? '//' : '/following-sibling::ul/descendant::');
+          $part_xpath .= 'li[contains(@class, :class)]/a[contains(@href, :href) and contains(text(), :title)]';
+          $part_args = array(
+            ':class' => 'active-trail',
+            ':href' => url($link_path),
+            ':title' => $link_title,
+          );
+          $xpath .= $this->buildXPathQuery($part_xpath, $part_args);
+          $i++;
+        }
+        $elements = $this->xpath($xpath);
+        $this->assertTrue(!empty($elements), 'Active trail to current page was found in menu tree.');
+
+        // Append prefix for active link asserted below.
+        $xpath .= '/following-sibling::ul/descendant::';
+      }
+      else {
+        $xpath .= '//';
+      }
+      $xpath_last_active = ($last_active ? 'and contains(@class, :class-active)' : '');
+      $xpath .= 'li[contains(@class, :class-trail)]/a[contains(@href, :href) ' . $xpath_last_active . 'and contains(text(), :title)]';
+      $args = array(
+        ':class-trail' => 'active-trail',
+        ':class-active' => 'active',
+        ':href' => url($active_link_path),
+        ':title' => $active_link_title,
+      );
+      $elements = $this->xpath($xpath, $args);
+      $this->assertTrue(!empty($elements), format_string('Active link %title was found in menu tree, including active trail links %tree.', array(
+        '%title' => $active_link_title,
+        '%tree' => implode(' » ', $tree),
+      )));
+    }
+  }
+
+  /**
+   * Returns the breadcrumb contents of the current page in the internal browser.
+   */
+  protected function getParts() {
+    $parts = array();
+    $elements = $this->xpath('//div[@class="breadcrumb"]/a');
+    if (!empty($elements)) {
+      foreach ($elements as $element) {
+        $parts[] = array(
+          'text' => (string) $element,
+          'href' => (string) $element['href'],
+          'title' => (string) $element['title'],
+        );
+      }
+    }
+    return $parts;
+  }
+}
+
+class MenuRouterTestCase extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Menu router',
+      'description' => 'Tests menu router and hook_menu() functionality.',
+      'group' => 'Menu',
+    );
+  }
+
+  function setUp() {
+    // Enable dummy module that implements hook_menu.
+    parent::setUp('menu_test');
+    // Make the tests below more robust by explicitly setting the default theme
+    // and administrative theme that they expect.
+    theme_enable(array('bartik'));
+    variable_set('theme_default', 'bartik');
+    variable_set('admin_theme', 'seven');
+  }
+
+  /**
+   * Test title callback set to FALSE.
+   */
+  function testTitleCallbackFalse() {
+    $this->drupalGet('node');
+    $this->assertText('A title with @placeholder', 'Raw text found on the page');
+    $this->assertNoText(t('A title with @placeholder', array('@placeholder' => 'some other text')), 'Text with placeholder substitutions not found.');
+  }
+
+  /**
+   * Tests page title of MENU_CALLBACKs.
+   */
+  function testTitleMenuCallback() {
+    // Verify that the menu router item title is not visible.
+    $this->drupalGet('');
+    $this->assertNoText(t('Menu Callback Title'));
+    // Verify that the menu router item title is output as page title.
+    $this->drupalGet('menu_callback_title');
+    $this->assertText(t('Menu Callback Title'));
+  }
+
+  /**
+   * Test the theme callback when it is set to use an administrative theme.
+   */
+  function testThemeCallbackAdministrative() {
+    $this->drupalGet('menu-test/theme-callback/use-admin-theme');
+    $this->assertText('Custom theme: seven. Actual theme: seven.', 'The administrative theme can be correctly set in a theme callback.');
+    $this->assertRaw('seven/style.css', "The administrative theme's CSS appears on the page.");
+  }
+
+  /**
+   * Test that the theme callback is properly inherited.
+   */
+  function testThemeCallbackInheritance() {
+    $this->drupalGet('menu-test/theme-callback/use-admin-theme/inheritance');
+    $this->assertText('Custom theme: seven. Actual theme: seven. Theme callback inheritance is being tested.', 'Theme callback inheritance correctly uses the administrative theme.');
+    $this->assertRaw('seven/style.css', "The administrative theme's CSS appears on the page.");
+  }
+
+  /**
+   * Test that 'page callback', 'file' and 'file path' keys are properly
+   * inherited from parent menu paths.
+   */
+  function testFileInheritance() {
+    $this->drupalGet('admin/config/development/file-inheritance');
+    $this->assertText('File inheritance test description', 'File inheritance works.');
+  }
+
+  /**
+   * Test path containing "exotic" characters.
+   */
+  function testExoticPath() {
+    $path = "menu-test/ -._~!$'\"()*@[]?&+%#,;=:" . // "Special" ASCII characters.
+      "%23%25%26%2B%2F%3F" . // Characters that look like a percent-escaped string.
+      "éøïвβ中國書۞"; // Characters from various non-ASCII alphabets.
+    $this->drupalGet($path);
+    $this->assertRaw('This is menu_test_callback().');
+  }
+
+  /**
+   * Test the theme callback when the site is in maintenance mode.
+   */
+  function testThemeCallbackMaintenanceMode() {
+    variable_set('maintenance_mode', TRUE);
+
+    // For a regular user, the fact that the site is in maintenance mode means
+    // we expect the theme callback system to be bypassed entirely.
+    $this->drupalGet('menu-test/theme-callback/use-admin-theme');
+    $this->assertRaw('bartik/css/style.css', "The maintenance theme's CSS appears on the page.");
+
+    // An administrator, however, should continue to see the requested theme.
+    $admin_user = $this->drupalCreateUser(array('access site in maintenance mode'));
+    $this->drupalLogin($admin_user);
+    $this->drupalGet('menu-test/theme-callback/use-admin-theme');
+    $this->assertText('Custom theme: seven. Actual theme: seven.', 'The theme callback system is correctly triggered for an administrator when the site is in maintenance mode.');
+    $this->assertRaw('seven/style.css', "The administrative theme's CSS appears on the page.");
+  }
+
+  /**
+   * Make sure the maintenance mode can be bypassed using hook_menu_site_status_alter().
+   *
+   * @see hook_menu_site_status_alter().
+   */
+  function testMaintenanceModeLoginPaths() {
+    variable_set('maintenance_mode', TRUE);
+
+    $offline_message = t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')));
+    $this->drupalLogout();
+    $this->drupalGet('node');
+    $this->assertText($offline_message);
+    $this->drupalGet('menu_login_callback');
+    $this->assertText('This is menu_login_callback().', t('Maintenance mode can be bypassed through hook_login_paths().'));
+  }
+
+  /**
+   * Test that an authenticated user hitting 'user/login' gets redirected to
+   * 'user' and 'user/register' gets redirected to the user edit page.
+   */
+  function testAuthUserUserLogin() {
+    $loggedInUser = $this->drupalCreateUser(array());
+    $this->drupalLogin($loggedInUser);
+
+    $this->drupalGet('user/login');
+    // Check that we got to 'user'.
+    $this->assertTrue($this->url == url('user', array('absolute' => TRUE)), "Logged-in user redirected to q=user on accessing q=user/login");
+
+    // user/register should redirect to user/UID/edit.
+    $this->drupalGet('user/register');
+    $this->assertTrue($this->url == url('user/' . $this->loggedInUser->uid . '/edit', array('absolute' => TRUE)), "Logged-in user redirected to q=user/UID/edit on accessing q=user/register");
+  }
+
+  /**
+   * Test the theme callback when it is set to use an optional theme.
+   */
+  function testThemeCallbackOptionalTheme() {
+    // Request a theme that is not enabled.
+    $this->drupalGet('menu-test/theme-callback/use-stark-theme');
+    $this->assertText('Custom theme: NONE. Actual theme: bartik.', 'The theme callback system falls back on the default theme when a theme that is not enabled is requested.');
+    $this->assertRaw('bartik/css/style.css', "The default theme's CSS appears on the page.");
+
+    // Now enable the theme and request it again.
+    theme_enable(array('stark'));
+    $this->drupalGet('menu-test/theme-callback/use-stark-theme');
+    $this->assertText('Custom theme: stark. Actual theme: stark.', 'The theme callback system uses an optional theme once it has been enabled.');
+    $this->assertRaw('stark/layout.css', "The optional theme's CSS appears on the page.");
+  }
+
+  /**
+   * Test the theme callback when it is set to use a theme that does not exist.
+   */
+  function testThemeCallbackFakeTheme() {
+    $this->drupalGet('menu-test/theme-callback/use-fake-theme');
+    $this->assertText('Custom theme: NONE. Actual theme: bartik.', 'The theme callback system falls back on the default theme when a theme that does not exist is requested.');
+    $this->assertRaw('bartik/css/style.css', "The default theme's CSS appears on the page.");
+  }
+
+  /**
+   * Test the theme callback when no theme is requested.
+   */
+  function testThemeCallbackNoThemeRequested() {
+    $this->drupalGet('menu-test/theme-callback/no-theme-requested');
+    $this->assertText('Custom theme: NONE. Actual theme: bartik.', 'The theme callback system falls back on the default theme when no theme is requested.');
+    $this->assertRaw('bartik/css/style.css', "The default theme's CSS appears on the page.");
+  }
+
+  /**
+   * Test that hook_custom_theme() can control the theme of a page.
+   */
+  function testHookCustomTheme() {
+    // Trigger hook_custom_theme() to dynamically request the Stark theme for
+    // the requested page.
+    variable_set('menu_test_hook_custom_theme_name', 'stark');
+    theme_enable(array('stark'));
+
+    // Visit a page that does not implement a theme callback. The above request
+    // should be honored.
+    $this->drupalGet('menu-test/no-theme-callback');
+    $this->assertText('Custom theme: stark. Actual theme: stark.', 'The result of hook_custom_theme() is used as the theme for the current page.');
+    $this->assertRaw('stark/layout.css', "The Stark theme's CSS appears on the page.");
+  }
+
+  /**
+   * Test that the theme callback wins out over hook_custom_theme().
+   */
+  function testThemeCallbackHookCustomTheme() {
+    // Trigger hook_custom_theme() to dynamically request the Stark theme for
+    // the requested page.
+    variable_set('menu_test_hook_custom_theme_name', 'stark');
+    theme_enable(array('stark'));
+
+    // The menu "theme callback" should take precedence over a value set in
+    // hook_custom_theme().
+    $this->drupalGet('menu-test/theme-callback/use-admin-theme');
+    $this->assertText('Custom theme: seven. Actual theme: seven.', 'The result of hook_custom_theme() does not override what was set in a theme callback.');
+    $this->assertRaw('seven/style.css', "The Seven theme's CSS appears on the page.");
+  }
+
+  /**
+   * Tests for menu_link_maintain().
+   */
+  function testMenuLinkMaintain() {
+    $admin_user = $this->drupalCreateUser(array('administer site configuration'));
+    $this->drupalLogin($admin_user);
+
+    // Create three menu items.
+    menu_link_maintain('menu_test', 'insert', 'menu_test_maintain/1', 'Menu link #1');
+    menu_link_maintain('menu_test', 'insert', 'menu_test_maintain/1', 'Menu link #1-1');
+    menu_link_maintain('menu_test', 'insert', 'menu_test_maintain/2', 'Menu link #2');
+
+    // Move second link to the main-menu, to test caching later on.
+    db_update('menu_links')
+      ->fields(array('menu_name' => 'main-menu'))
+      ->condition('link_title', 'Menu link #1-1')
+      ->condition('customized', 0)
+      ->condition('module', 'menu_test')
+      ->execute();
+    menu_cache_clear('main-menu');
+
+    // Load front page.
+    $this->drupalGet('node');
+    $this->assertLink(t('Menu link #1'), 0, 'Found menu link #1');
+    $this->assertLink(t('Menu link #1-1'), 0, 'Found menu link #1-1');
+    $this->assertLink(t('Menu link #2'), 0, 'Found menu link #2');
+
+    // Rename all links for the given path.
+    menu_link_maintain('menu_test', 'update', 'menu_test_maintain/1', 'Menu link updated');
+    // Load a different page to be sure that we have up to date information.
+    $this->drupalGet('menu_test_maintain/1');
+    $this->assertLink(t('Menu link updated'), 0, 'Found updated menu link');
+    $this->assertNoLink(t('Menu link #1'), 0, 'Not found menu link #1');
+    $this->assertNoLink(t('Menu link #1'), 0, 'Not found menu link #1-1');
+    $this->assertLink(t('Menu link #2'), 0, 'Found menu link #2');
+
+    // Delete all links for the given path.
+    menu_link_maintain('menu_test', 'delete', 'menu_test_maintain/1', '');
+    // Load a different page to be sure that we have up to date information.
+    $this->drupalGet('menu_test_maintain/2');
+    $this->assertNoLink(t('Menu link updated'), 0, 'Not found deleted menu link');
+    $this->assertNoLink(t('Menu link #1'), 0, 'Not found menu link #1');
+    $this->assertNoLink(t('Menu link #1'), 0, 'Not found menu link #1-1');
+    $this->assertLink(t('Menu link #2'), 0, 'Found menu link #2');
+  }
+
+  /**
+   * Test menu_get_names().
+   */
+  function testMenuGetNames() {
+    // Create three menu items.
+    for ($i = 0; $i < 3; $i++) {
+      $menu_link = array(
+        'link_title' => 'Menu link #' . $i,
+        'link_path' => 'menu_test/' . $i,
+        'module' => 'menu_test',
+        'menu_name' => 'menu_test_' . $i,
+      );
+      menu_link_save($menu_link);
+    }
+
+    drupal_static_reset('menu_get_names');
+
+    // Verify that the menu names are correctly reported by menu_get_names().
+    $menu_names = menu_get_names();
+    $this->pass(implode(' | ', $menu_names));
+    for ($i = 0; $i < 3; $i++) {
+      $this->assertTrue(in_array('menu_test_' . $i, $menu_names), t('Expected menu name %expected is returned.', array('%expected' => 'menu_test_' . $i)));
+    }
+  }
+
+  /**
+   * Tests for menu_name parameter for hook_menu().
+   */
+  function testMenuName() {
+    $admin_user = $this->drupalCreateUser(array('administer site configuration'));
+    $this->drupalLogin($admin_user);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                

@@ -1,0 +1,355 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+    <style>
+        .tree {
+            width: 80%;
+            margin: 0 auto;
+            min-height:20px;
+            padding:19px;
+            margin-bottom:20px;
+            background-color:#fbfbfb;
+            border:1px solid #999;
+            -webkit-border-radius:4px;
+            -moz-border-radius:4px;
+            border-radius:4px;
+            -webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, 0.05);
+            -moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, 0.05);
+            box-shadow:inset 0 1px 1px rgba(0, 0, 0, 0.05)
+        }
+        .tree li {
+            list-style-type:none;
+            margin:0;
+            padding:10px 5px 0 5px;
+            position:relative
+        }
+        .tree li::before, .tree li::after {
+            content:'';
+            left:-20px;
+            position:absolute;
+            right:auto
+        }
+        .tree li::before {
+            border-left:1px solid #999;
+            bottom:50px;
+            height:100%;
+            top:0;
+            width:1px
+        }
+        .tree li::after {
+            border-top:1px solid #999;
+            height:20px;
+            top:25px;
+            width:25px
+        }
+        .tree li span {
+            -moz-border-radius:5px;
+            -webkit-border-radius:5px;
+            border:1px solid #999;
+            border-radius:5px;
+            display:inline-block;
+            padding:3px 8px;
+            text-decoration:none
+        }
+        .tree li.parent_li>span {
+            cursor:pointer
+        }
+        .tree>ul>li::before, .tree>ul>li::after {
+            border:0
+        }
+        .tree li:last-child::before {
+            height:30px
+        }
+        .tree li.parent_li>span:hover, .tree li.parent_li>span:hover+ul li span {
+            background:#eee;
+            border:1px solid #94a0b4;
+            color:#000
+        }
+        ul, ol {
+            width:80%;
+            margin:0 auto;
+            padding: 0;
+
+        }
+        #history{width:20px; height: 20px;border-radius:15px; border:1px solid #7B9EBD; margin:10px;}
+        #history a{padding: 5px;}
+    </style>
+    <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
+            $('.tree li.parent_li > span').on('click', function(e) {
+                var children = $(this).parent('li.parent_li').find(' > ul > li');
+                if (children.is(":visible")) {
+                    children.hide('fast');
+                    $(this).attr('title', 'Expand this branch').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+                } else {
+                    children.show('fast');
+                    $(this).attr('title', 'Collapse this branch').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
+                }
+                e.stopPropagation();
+            });
+        });
+    </script>
+
+</head>
+<body>
+<div id="history"><a href="http://kj2.caishu.name/"><</a></div>
+<div class="tree well">
+    <ul>
+        <li>
+            <span><i class="icon-folder-open"></i>科技创新政策体系</span>
+            <ul>
+                <li>
+                    <span><i class="icon-minus-sign"></i> 纲领性文件</span>
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 纲领性文件</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">法律法规</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">战略决策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技规划</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">改革文件</a></span></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li>
+                    <span><i class="icon-minus-sign"></i> 要素政策</span>
+
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 科技投入政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技投入综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">财政拨款政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技计划（基金、专项等）</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科研经费管理政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">计划评估与监督政策</a></span></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 人才政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">人才综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">人才引进政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">人才培养政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">人才流动政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">人才创业政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">人才评价政策</a></span></li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 科技创新基础条件与基地政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">条件与基地综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技创新基地政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">国家科技基础条件平台政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">大科学工程和设施政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">开放共享政策</a></span></li>
+
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+
+                <li>
+                    <span><i class="icon-minus-sign"></i> 主体政策</span>
+
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 企业创新政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">企业创新综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">财税政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">采购政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">企业研发机构政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">国有企业创新政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">中小微企业创新政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">其他专项政策</a></span></li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 院所高校政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">院所高校综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">应用类科研院所政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">基础类科研院所政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">公益类科研院所政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">高等院校政策</a></span></li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 创新创业服务机构政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">创新创业服务机构综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技企业孵化器政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技企业孵化器政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">生产力促进中心政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">众创空间政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技类社会组织政策</a></span></li>
+
+
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+
+                <li>
+                    <span><i class="icon-minus-sign"></i> 关联政策</span>
+
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 产学研结合政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">产学研结合综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">联盟政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科教结合政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技计划促进产学研结合政策</a></span></li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 促进科技成果转化</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">促进科技成果转化综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">处置权、使用权、收益权政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">收入分配激励成果转化政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">成果转化中介机构建设政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">财税支持成果转化政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">金融支持成果转化政策</a></span></li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 军民科技融合政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">军民科技融合综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">军用技术转民用政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">民营企业参与武器装备科研生产政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">国防科技工业投资政策</a></span></li>
+
+
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+
+                <li>
+                    <span><i class="icon-minus-sign"></i> 产业技术与社会发展政策</span>
+
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i>产业技术与社会发展政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">产业技术综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">产业技术开发政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">与技术有关的产业投资政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">产业技术引进与消化吸收政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">产业技术出口政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">产业技术应用示范政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">产业技术安全政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">社会发展类综合性政策</a></span></li>
+
+                            </ul>
+                        </li>
+
+                    </ul>
+                </li>
+
+
+                <li>
+                    <span><i class="icon-minus-sign"></i> 区域创新政策</span>
+
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i>区域创新政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">区域创新综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">国家重大区域战略部署</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">自主创新示范区政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">高新区政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">跨区域协同创新政策</a></span></li>
+
+                            </ul>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <li>
+                    <span><i class="icon-minus-sign"></i> 创新环境政策</span>
+
+                    <ul>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 科技金融政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技金融综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">创业风险投资政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技信贷与担保政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">资本市场政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技保险政策</a></span></li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 知识产权与技术标准政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">知识产权和技术标准综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">知识产权创造政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">知识产权保护政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">知识产权运用政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">知识产权管理政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">技术标准政策</a></span></li>
+
+
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 创新国际化政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">创新国际化综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">研发合作政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">企业国际化创新政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">引进外资创新政策</a></span></li>
+
+
+                            </ul>
+                        </li>
+
+                        <li>
+                            <span><i class="icon-minus-sign"></i> 文化环境政策</span>
+                            <ul>
+                                <li><span><i class="icon-leaf"></i> <a href="">文化环境综合性政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科普政策</a></span></li>
+                                <li><span><i class="icon-leaf"></i> <a href="">科技奖励政策</a></span></li>
+
+
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+
+
+
+            </ul>
+        </li>
+
+    </ul>
+</div>
+
+</body>
+</html>
+

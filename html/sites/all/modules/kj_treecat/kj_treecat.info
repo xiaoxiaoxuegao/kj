@@ -1,0 +1,5 @@
+name = KJ2 tree list
+description = .
+dependencies[] = taxonomy
+core = 7.x
+
